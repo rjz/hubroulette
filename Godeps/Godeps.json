@@ -1,0 +1,35 @@
+{
+	"ImportPath": "github.com/rjz/github-assignee",
+	"GoVersion": "go1.4",
+	"Deps": [
+		{
+			"ImportPath": "github.com/google/go-github/github",
+			"Rev": "81d0490d8aa8400f6760a077f4a2039eb0296e86"
+		},
+		{
+			"ImportPath": "github.com/google/go-querystring/query",
+			"Rev": "2a60fc2ba6c19de80291203597d752e9ba58e4c0"
+		},
+		{
+			"ImportPath": "github.com/nlopes/slack",
+			"Comment": "v0.0.1-67-gbfabccf",
+			"Rev": "bfabccff9d71164431875081ba7ae3ab197525d6"
+		},
+		{
+			"ImportPath": "github.com/rjz/githubhook",
+			"Rev": "fd120114c36809a0d86737bb67e90e8c9b0e2710"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "cd8c2701a5e10f044db915e65eac68f738399d22"
+		},
+		{
+			"ImportPath": "golang.org/x/net/websocket",
+			"Rev": "cd8c2701a5e10f044db915e65eac68f738399d22"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "ef4eca6b097fad7cec79afcc278d213a6de1c960"
+		}
+	]
+}
