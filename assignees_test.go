@@ -43,3 +43,21 @@ func TestSampleUsers(t *testing.T) {
 		t.Errorf("Expected someone familiar, didn't get 'em")
 	}
 }
+
+func TestSampleSingleUser(t *testing.T) {
+	bob := "bob"
+	assignee := NewAssignees([]string{
+		"alice",
+		bob,
+	}).Without(&bob).Sample()
+
+	if assignee == nil {
+		t.Errorf("Expected user, got nil")
+	}
+
+	login := *assignee.Login
+
+	if login != "alice" {
+		t.Errorf("Expected someone familiar, didn't get 'em")
+	}
+}

@@ -93,8 +93,10 @@ func (h *PRHandler) currentAssignee(number int) error {
 
 // Notify slack about a new assignee
 func (h *PRHandler) Notify() error {
-	prName := fmt.Sprintf("%s#%d", *h.githubRepository.FullName, *h.githubPullRequest.Number)
-	msg := fmt.Sprintf("%s is now open. %s drew the lucky straw!\n %s", prName, *h.assignee.Login, *h.githubPullRequest.HTMLURL)
+	prAuthor := *h.githubPullRequest.User.Login
+	prTitle := *h.githubPullRequest.Title
+	prFullName := fmt.Sprintf("%s#%d", *h.githubRepository.FullName, *h.githubPullRequest.Number)
+	msg := fmt.Sprintf("%s has opened %s ('%s'). %s drew the lucky straw!\n %s", prAuthor, prFullName, prTitle, *h.assignee.Login, *h.githubPullRequest.HTMLURL)
 
 	_, _, err := h.slackClient.PostMessage(h.slackChannel, msg, h.slackMessageParams)
 	return err
