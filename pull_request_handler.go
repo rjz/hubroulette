@@ -15,6 +15,7 @@ type PRHandler struct {
 	githubClient       *github.Client
 	githubPullRequest  *github.PullRequest
 	githubRepository   *github.Repository
+	logger             *log.Logger
 	slackChannel       string
 	slackClient        *slack.Client
 	slackMessageParams slack.PostMessageParameters
@@ -24,6 +25,20 @@ func githubClient(accessToken string) *github.Client {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: accessToken})
 	oc := oauth2.NewClient(oauth2.NoContext, ts)
 	return github.NewClient(oc)
+}
+
+func pullRequestEventAttachment(evt *github.PullRequestEvent) *slack.Attachment {
+
+	title := fmt.Sprintf("%s#%d", *evt.Repo.FullName, *evt.PullRequest.Number)
+	titleLink := *evt.PullRequest.HTMLURL
+	fallback := fmt.Sprintf("%s - %s", title, titleLink)
+
+	return &slack.Attachment{
+		Title:     title,
+		TitleLink: titleLink,
+		Text:      *evt.PullRequest.Body,
+		Fallback:  fallback,
+	}
 }
 
 func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
@@ -39,20 +54,27 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 
 	ghClient := githubClient(c.githubAccessToken)
 
+	loggerPrefix := fmt.Sprintf("[pr:%s#%d] ", *evt.Repo.FullName, *evt.PullRequest.Number)
+	logger := log.New(os.Stdout, loggerPrefix, log.LstdFlags)
+
 	h := PRHandler{
 		assignee:          nil,
 		githubClient:      ghClient,
 		githubPullRequest: evt.PullRequest,
 		githubRepository:  evt.Repo,
+		logger:            logger,
 		slackClient:       slack.New(c.slackToken),
 		slackChannel:      c.slackChannel,
 		slackMessageParams: slack.PostMessageParameters{
-			IconEmoji: ":game_die:",
+			IconEmoji:   ":game_die:",
+			Username:    "Assignee Bot",
+			Attachments: []slack.Attachment{*pullRequestEventAttachment(evt)},
 		},
 	}
 
-	loggerPrefix := fmt.Sprintf("[pr:%s#%d] ", *evt.Repo.FullName, *evt.PullRequest.Number)
-	logger := log.New(os.Stdout, loggerPrefix, log.LstdFlags)
+	prAuthor := *h.githubPullRequest.User.Login
+	prFullName := fmt.Sprintf("%s#%d", *h.githubRepository.FullName, *h.githubPullRequest.Number)
+	prAssignee := *h.assignee.Login
 
 	if err := h.currentAssignee(*evt.PullRequest.Number); err != nil {
 		logger.Println("Failed retrieving issue status", err)
@@ -61,7 +83,7 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 
 	if h.assignee != nil {
 		logger.Println("Issue is already assigned, skipping")
-		return nil
+		return h.Notify(fmt.Sprintf("%s assigned %s to %s", prAuthor, prAssignee, prFullName))
 	}
 
 	if err := h.Assign(contributors.Without(evt.PullRequest.User.Login).Sample()); err != nil {
@@ -69,12 +91,7 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 		return err
 	}
 
-	if err := h.Notify(); err != nil {
-		logger.Println("Failed notifying slack", c.slackChannel, err)
-		return err
-	}
-
-	return nil
+	return h.Notify(fmt.Sprintf("%s opens %s, and %s draws the lucky straw!", prAuthor, prFullName, prAssignee))
 }
 
 // Look up current assignee for github issue and set `h.assignee`
@@ -91,15 +108,13 @@ func (h *PRHandler) currentAssignee(number int) error {
 	return nil
 }
 
-// Notify slack about a new assignee
-func (h *PRHandler) Notify() error {
-	prAuthor := *h.githubPullRequest.User.Login
-	prTitle := *h.githubPullRequest.Title
-	prFullName := fmt.Sprintf("%s#%d", *h.githubRepository.FullName, *h.githubPullRequest.Number)
-	msg := fmt.Sprintf("%s has opened %s ('%s'). %s drew the lucky straw!\n %s", prAuthor, prFullName, prTitle, *h.assignee.Login, *h.githubPullRequest.HTMLURL)
-
-	_, _, err := h.slackClient.PostMessage(h.slackChannel, msg, h.slackMessageParams)
-	return err
+// Notify slack
+func (h *PRHandler) Notify(msg string) error {
+	if _, _, err := h.slackClient.PostMessage(h.slackChannel, msg, h.slackMessageParams); err != nil {
+		h.logger.Println("Failed notifying slack", h.slackChannel, err)
+		return err
+	}
+	return nil
 }
 
 // Assign the pull request to the specified `assignee`
