@@ -74,7 +74,6 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 
 	prAuthor := *h.githubPullRequest.User.Login
 	prFullName := fmt.Sprintf("%s#%d", *h.githubRepository.FullName, *h.githubPullRequest.Number)
-	prAssignee := *h.assignee.Login
 
 	if err := h.currentAssignee(*evt.PullRequest.Number); err != nil {
 		logger.Println("Failed retrieving issue status", err)
@@ -83,7 +82,7 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 
 	if h.assignee != nil {
 		logger.Println("Issue is already assigned, skipping")
-		return h.Notify(fmt.Sprintf("%s assigned %s to %s", prAuthor, prAssignee, prFullName))
+		return h.Notify(fmt.Sprintf("%s assigned %s to %s", prAuthor, *h.assignee.Login, prFullName))
 	}
 
 	if err := h.Assign(contributors.Without(evt.PullRequest.User.Login).Sample()); err != nil {
@@ -91,7 +90,7 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 		return err
 	}
 
-	return h.Notify(fmt.Sprintf("%s opens %s, and %s draws the lucky straw!", prAuthor, prFullName, prAssignee))
+	return h.Notify(fmt.Sprintf("%s opens %s, and %s draws the lucky straw!", prAuthor, prFullName, *h.assignee.Login))
 }
 
 // Look up current assignee for github issue and set `h.assignee`
