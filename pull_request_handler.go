@@ -29,7 +29,7 @@ func githubClient(accessToken string) *github.Client {
 
 func pullRequestEventAttachment(evt *github.PullRequestEvent) *slack.Attachment {
 
-	title := fmt.Sprintf("%s#%d", *evt.Repo.FullName, *evt.PullRequest.Number)
+	title := fmt.Sprintf("%s#%d: %s", *evt.Repo.FullName, *evt.PullRequest.Number, *evt.PullRequest.Title)
 	titleLink := *evt.PullRequest.HTMLURL
 	fallback := fmt.Sprintf("%s - %s", title, titleLink)
 
