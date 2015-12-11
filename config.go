@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -15,15 +16,15 @@ type Config struct {
 	slackUsername       string
 	slackChannel        string
 	slackToken          string
-	port                int
+	port                int64
+	hubrouletterc       *Options
 }
 
 func NewConfig() *Config {
 
-	port, err := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
-	if err != nil {
-		port = default_port
-	}
+	var err error
+
+	logger := log.New(os.Stdout, "[config] ", log.LstdFlags)
 
 	config := Config{
 		assigneeLogins:      strings.Split(os.Getenv("ASSIGNEE_LOGINS"), ","),
@@ -32,7 +33,17 @@ func NewConfig() *Config {
 		slackUsername:       os.Getenv("SLACK_USERNAME"),
 		slackChannel:        os.Getenv("SLACK_CHANNEL"),
 		slackToken:          os.Getenv("SLACK_TOKEN"),
-		port:                int(port),
+	}
+
+	port := os.Getenv("PORT")
+	if config.port, err = strconv.ParseInt(port, 10, 32); err != nil {
+		logger.Printf("Environment specified invalid PORT '%s', using default (%d)", port, default_port)
+		config.port = default_port
+	}
+
+	hrc := []byte(os.Getenv("HUBROULETTERC"))
+	if config.hubrouletterc, err = ParseOptions(&hrc); err != nil {
+		logger.Printf("Environment specified invalid HUBROULETTERC '%s'", string(hrc))
 	}
 
 	return &config
