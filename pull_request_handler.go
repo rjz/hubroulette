@@ -17,7 +17,7 @@ func githubClient(accessToken string) *github.Client {
 }
 
 func pullRequestEventAttachment(ctx *PullRequestEventContext) *slack.Attachment {
-	title := fmt.Sprintf("%s: %s", ctx.FullName(), *ctx.PullRequest.Title)
+	title := fmt.Sprintf("%s: “%s”", ctx.FullName(), *ctx.PullRequest.Title)
 	titleLink := *ctx.PullRequest.HTMLURL
 	return &slack.Attachment{
 		Title:     title,
