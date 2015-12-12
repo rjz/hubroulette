@@ -1,11 +1,11 @@
-# Github Random Assignee
+# Hubroulette
 
 Pull request roulette! Assign a teammate to review newly opened Github Pull
 Requests while announcing the play-by-play in the team slack channel.
 
 ### Heroku installation
 
-    $ git clone git@github.com:rjz/github-random-assignee
+    $ git clone git@github.com:rjz/hubroulette
 
     $ heroku create
     $ git push heroku master
@@ -19,14 +19,15 @@ Use environment variables to define global settings:
       SLACK_CHANNEL='#github' \
       SLACK_TOKEN='xxxxxxxx-xxxxxx-xxxxxxx-xxxxxxxx' \
       GITHUB_ACCESS_TOKEN='foobar' \
-      GITHUB_WEBHOOK_SECRET='xyz'
+      GITHUB_WEBHOOK_SECRET='xyz' \
+      HUBROULETTERC='{"team":[{"github":"rjz","slack":"rj"}]}'
 
 Per-repository configuration can be managed using a JSON `.hubrouletterc` file
 in the top level of the repository.
 
 ```json
 {
-  "slackChannel": "#general"
+  "slackChannel": "#general",
   "team": [
     {
       "github": "<github_login>",
