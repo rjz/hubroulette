@@ -15,6 +15,18 @@ type WebhookServer struct {
 	secret string
 }
 
+func String(s string) *string {
+	str := new(string)
+	*str = s
+	return str
+}
+
+func Int(i int) *int {
+	j := new(int)
+	*j = i
+	return j
+}
+
 func parsePullRequestEvent(hook *githubhook.Hook) *github.PullRequestEvent {
 	evt := github.PullRequestEvent{}
 	json.Unmarshal(hook.Payload, &evt)
