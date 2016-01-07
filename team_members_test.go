@@ -12,6 +12,20 @@ func someTeamMembers() *TeamMembers {
 	}
 }
 
+func TestTeamMemberSlackOrGithubNoSlack(t *testing.T) {
+	alice := TeamMember{Github: String("alice")}
+	if alice.SlackHandle() != "alice" {
+		t.Error("expected to see github handle")
+	}
+}
+
+func TestTeamMemberSlackOrGithubSlackAvailable(t *testing.T) {
+	alice := &TeamMember{Github: String("alice"), Slack: String("slack_alice")}
+	if alice.SlackHandle() != "@slack_alice" {
+		t.Error("expected to see slack handle")
+	}
+}
+
 func TestTeamMembersFindByGithubLogin(t *testing.T) {
 	alice := someTeamMembers().FindByGithubLogin(String("alice"))
 	if *alice.Slack != "slack_alice" {

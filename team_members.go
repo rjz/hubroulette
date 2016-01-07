@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -9,6 +10,15 @@ import (
 type TeamMember struct {
 	Github *string `json:"github,omitempty"`
 	Slack  *string `json:"slack,omitempty"`
+}
+
+// SlackHandle returns the TeamMember's slack handle if available and falls
+// back on github if it isn't.
+func (tm *TeamMember) SlackHandle() string {
+	if tm.Slack != nil {
+		return fmt.Sprintf("@%s", *tm.Slack)
+	}
+	return *tm.Github
 }
 
 type TeamMembers []TeamMember

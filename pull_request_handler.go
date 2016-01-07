@@ -31,6 +31,7 @@ func slackMessage(client *slack.Client, ctx *PullRequestEventContext, msg string
 	messageParams := slack.PostMessageParameters{
 		IconEmoji:   ":game_die:",
 		Username:    "Assignee Bot",
+		LinkNames:   1,
 		Attachments: []slack.Attachment{*pullRequestEventAttachment(ctx)},
 	}
 	_, _, err := client.PostMessage(*ctx.Options.SlackChannel, msg, messageParams)
@@ -73,7 +74,13 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 	}
 
 	if ctx.Issue.Assignee != nil {
-		skipMsg := fmt.Sprintf("%s assigned %s to %s", ctx.Author(), *ctx.Issue.Assignee.Login, ctx.FullName())
+
+		assigneeLogin := *ctx.Issue.Assignee.Login
+		if tm := ctx.Options.TeamMembers.FindByGithubLogin(&assigneeLogin); tm != nil {
+			assigneeLogin = tm.SlackHandle()
+		}
+
+		skipMsg := fmt.Sprintf("%s assigned %s to %s", ctx.Author(), assigneeLogin, ctx.FullName())
 		if err := slackMessage(slackClient, ctx, skipMsg); err != nil {
 			logger.Println("Failed notifying slack", err)
 			return err
@@ -87,7 +94,7 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 		return assignErr
 	}
 
-	assignMsg := fmt.Sprintf("%s opens %s, and %s draws the lucky straw!", ctx.Author(), ctx.FullName(), *assignee.Github)
+	assignMsg := fmt.Sprintf("%s opens %s, and %s draws the lucky straw!", ctx.Author(), ctx.FullName(), assignee.SlackHandle())
 	if err := slackMessage(slackClient, ctx, assignMsg); err != nil {
 		logger.Println("Failed notifying slack", err)
 		return err
