@@ -73,14 +73,8 @@ func HandlePullRequestEvent(evt *github.PullRequestEvent) error {
 		return contextErr
 	}
 
-	if ctx.Issue.Assignee != nil {
-
-		assigneeLogin := *ctx.Issue.Assignee.Login
-		if tm := ctx.Options.TeamMembers.FindByGithubLogin(&assigneeLogin); tm != nil {
-			assigneeLogin = tm.SlackHandle()
-		}
-
-		skipMsg := fmt.Sprintf("%s assigned %s to %s", ctx.Author(), assigneeLogin, ctx.FullName())
+	if ctx.IsAssigned() {
+		skipMsg := fmt.Sprintf("%s assigned %s to %s", ctx.Author(), ctx.AssigneeSlackHandle(), ctx.FullName())
 		if err := slackMessage(slackClient, ctx, skipMsg); err != nil {
 			logger.Println("Failed notifying slack", err)
 			return err

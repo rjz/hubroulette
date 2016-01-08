@@ -172,3 +172,45 @@ func TestGetContextMissingAssignee(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func user(login string) *github.User {
+	user := github.User{Login: &login}
+	return &user
+}
+
+func issueAssignedTo(assignee *github.User) *github.Issue {
+	issue := github.Issue{Assignee: assignee}
+	return &issue
+}
+
+func expectString(t *testing.T, expected, actual string) {
+	if expected != actual {
+		t.Error(fmt.Sprintf("expected '%s', got %s.", expected, actual))
+	}
+}
+
+func TestContextIsAssignedFalse(t *testing.T) {
+	ctx := PullRequestEventContext{Issue: issueAssignedTo(nil)}
+	if ctx.IsAssigned() {
+		t.Error("expected user to be assigned, but apparently not.")
+	}
+}
+
+func TestContextIsAssignedTrue(t *testing.T) {
+	ctx := PullRequestEventContext{Issue: issueAssignedTo(user("rjz"))}
+	if !ctx.IsAssigned() {
+		t.Error("expected user to be assigned, but apparently not.")
+	}
+}
+
+func TestContextAssigneeSlackHandle(t *testing.T) {
+	opts := Options{TeamMembers: someTeamMembers()}
+	ctx := PullRequestEventContext{Issue: issueAssignedTo(user("bob")), Options: &opts}
+	expectString(t, "bob", ctx.AssigneeSlackHandle())
+}
+
+func TestContextAssigneeSlackHandleWithSlack(t *testing.T) {
+	opts := Options{TeamMembers: someTeamMembers()}
+	ctx := PullRequestEventContext{Issue: issueAssignedTo(user("alice")), Options: &opts}
+	expectString(t, "@slack_alice", ctx.AssigneeSlackHandle())
+}

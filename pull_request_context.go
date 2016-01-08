@@ -16,12 +16,25 @@ type PullRequestEventContext struct {
 	Options     *Options
 }
 
-func (ctx *PullRequestEventContext) Author() string {
+func (ctx PullRequestEventContext) Author() string {
 	return *ctx.PullRequest.User.Login
 }
 
-func (ctx *PullRequestEventContext) FullName() string {
+func (ctx PullRequestEventContext) FullName() string {
 	return fmt.Sprintf("%s#%d", *ctx.Repository.FullName, *ctx.PullRequest.Number)
+}
+
+func (ctx PullRequestEventContext) IsAssigned() bool {
+	return ctx.Issue.Assignee != nil
+}
+
+func (ctx PullRequestEventContext) AssigneeSlackHandle() string {
+	login := *ctx.Issue.Assignee.Login
+	if tm := ctx.Options.TeamMembers.FindByGithubLogin(&login); tm != nil {
+		return tm.SlackHandle()
+	}
+
+	return login
 }
 
 // Look for the SHA of the config file in project root
