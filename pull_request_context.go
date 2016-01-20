@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/google/go-github/github"
@@ -34,6 +35,25 @@ func configShaFromTree(tree *github.Tree) *string {
 	return blobSha
 }
 
+func extractBlob(blob *github.Blob) (*[]byte, error) {
+
+	bytes := []byte(*blob.Content)
+
+	switch *blob.Encoding {
+	case "utf-8":
+		return &bytes, nil
+	case "base64":
+		decoded := make([]byte, base64.StdEncoding.DecodedLen(len(bytes)))
+		base64.StdEncoding.Decode(decoded, bytes)
+
+		// truncate padding to avoid feeding `json.Unmarshal` a bunch of 0x00s
+		unpadded := decoded[:*blob.Size]
+		return &unpadded, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("Github blob has unknown encoding '%s'", *blob.Encoding))
+	}
+}
+
 // Retrieve configuration from the repo, if checked in
 func getRc(client *github.Client, owner, repo, sha string) (*Options, error) {
 
@@ -52,9 +72,12 @@ func getRc(client *github.Client, owner, repo, sha string) (*Options, error) {
 		return nil, blobErr
 	}
 
-	bytes := []byte(*blob.Content)
+	content, err := extractBlob(blob)
+	if err != nil {
+		return nil, err
+	}
 
-	opts, optsErr := ParseOptions(&bytes)
+	opts, optsErr := ParseOptions(content)
 	if optsErr != nil {
 		return nil, optsErr
 	}

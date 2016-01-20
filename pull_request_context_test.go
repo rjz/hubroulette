@@ -67,7 +67,7 @@ func TestGetContext(t *testing.T) {
 	})
 
 	mux.HandleFunc("/repos/rjz/dingus/git/blobs/def456", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `{"content":"{\"slackChannel\":\"#maybe\",\"team\":[]}","encoding":"utf8"}`)
+		fmt.Fprint(w, `{"content":"{\"slackChannel\":\"#maybe\",\"team\":[]}","encoding":"utf-8"}`)
 	})
 
 	pre, err := GetContext(client, bogusEvent())
@@ -81,6 +81,49 @@ func TestGetContext(t *testing.T) {
 
 	if *pre.Issue.Assignee.Login != "rjz" {
 		t.Error(fmt.Sprintf("expected %s, saw %s", "rjz", *pre.Issue.Assignee.Login))
+	}
+}
+
+func TestGetContextBase64(t *testing.T) {
+	// $ export FIXTURE='{"team":[{"github":"rjz"}]}'
+	// $ echo "$FIXTURE" | base64
+	fixture := "eyJ0ZWFtIjpbeyJnaXRodWIiOiJyanoifV19Cg=="
+	// $ echo "$FIXTURE" | wc -c
+	fixtureLen := 28
+
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/repos/rjz/dingus/issues/1234", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"assignee":{"login":"rjz"}}`)
+	})
+
+	mux.HandleFunc("/repos/rjz/dingus/git/trees/abc123", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{
+			"sha": "abc123",
+			"tree":[
+				{
+					"path": ".hubrouletterc",
+					"type": "blob",
+					"sha": "def456"
+				}
+			]
+		}`)
+	})
+
+	mux.HandleFunc("/repos/rjz/dingus/git/blobs/def456", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, fmt.Sprintf(`{"content":"%s","size":%d,"encoding":"base64"}`, fixture, fixtureLen))
+	})
+
+	pre, err := GetContext(client, bogusEvent())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	user := (*pre.Options.TeamMembers)[0]
+
+	if *user.Github != "rjz" {
+		t.Error(fmt.Sprintf("expected %s, saw %s", "rjz", *user.Github))
 	}
 }
 

@@ -14,6 +14,7 @@ func ParseOptions(rawOpts *[]byte) (*Options, error) {
 	o := &Options{
 		SlackChannel: String("#general"),
 	}
+
 	if err := json.Unmarshal(*rawOpts, o); err != nil {
 		return nil, err
 	}
