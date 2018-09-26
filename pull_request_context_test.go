@@ -37,6 +37,7 @@ func setup() {
 
 	client = github.NewClient(nil)
 	url, _ := url.Parse(server.URL)
+	url.Path = "/"
 	client.BaseURL = url
 	client.UploadURL = url
 }

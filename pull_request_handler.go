@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/google/go-github/github"
@@ -46,7 +47,7 @@ func Assign(client *github.Client, ctx *PullRequestEventContext) (*TeamMember, e
 	}
 
 	patch := &github.IssueRequest{Assignee: assignee.Github}
-	if _, _, err := client.Issues.Edit(*ctx.Repository.Owner.Login, *ctx.Repository.Name, *ctx.PullRequest.Number, patch); err != nil {
+	if _, _, err := client.Issues.Edit(context.TODO(), *ctx.Repository.Owner.Login, *ctx.Repository.Name, *ctx.PullRequest.Number, patch); err != nil {
 		return nil, err
 	}
 

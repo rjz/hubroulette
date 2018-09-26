@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -69,8 +70,7 @@ func extractBlob(blob *github.Blob) (*[]byte, error) {
 
 // Retrieve configuration from the repo, if checked in
 func getRc(client *github.Client, owner, repo, sha string) (*Options, error) {
-
-	tree, _, treeErr := client.Git.GetTree(owner, repo, sha, false)
+	tree, _, treeErr := client.Git.GetTree(context.TODO(), owner, repo, sha, false)
 	if treeErr != nil {
 		return nil, treeErr
 	}
@@ -80,7 +80,7 @@ func getRc(client *github.Client, owner, repo, sha string) (*Options, error) {
 		return nil, nil
 	}
 
-	blob, _, blobErr := client.Git.GetBlob(owner, repo, *blobSha)
+	blob, _, blobErr := client.Git.GetBlob(context.TODO(), owner, repo, *blobSha)
 	if blobErr != nil {
 		return nil, blobErr
 	}
@@ -115,7 +115,7 @@ func GetContext(client *github.Client, evt *github.PullRequestEvent) (*PullReque
 		// compat.fin
 	}
 
-	issue, _, issueErr := client.Issues.Get(*evt.Repo.Owner.Login, *evt.Repo.Name, *evt.PullRequest.Number)
+	issue, _, issueErr := client.Issues.Get(context.TODO(), *evt.Repo.Owner.Login, *evt.Repo.Name, *evt.PullRequest.Number)
 	if issueErr != nil {
 		return nil, issueErr
 	}
