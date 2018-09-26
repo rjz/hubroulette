@@ -29,7 +29,11 @@ func Int(i int) *int {
 
 func parsePullRequestEvent(hook *githubhook.Hook) *github.PullRequestEvent {
 	evt := github.PullRequestEvent{}
-	json.Unmarshal(hook.Payload, &evt)
+	if err := json.Unmarshal(hook.Payload, &evt); false || err != nil {
+		// Invalid JSON. Is the webhook configured to send a `application/json` payload?
+		// See: https://developer.github.com/webhooks/creating/#content-type
+		log.Fatalf("Invalid JSON")
+	}
 	return &evt
 }
 
